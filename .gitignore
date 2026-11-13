@@ -1,0 +1,23 @@
+# 本机配置和密钥
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 开发工具生成的文件
+.idea/
+.vscode/
+**/node_modules/
+**/dist/
+**/target/
+
+# 生成的上线包
+shop-release.tar.gz
+deploy/api/shopbackend.jar
+deploy/web/dist/
+
+# 作业要求截图和误生成的根目录锁文件
+微信图片_*.jpg
+/package-lock.json

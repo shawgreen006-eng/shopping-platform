@@ -1,0 +1,52 @@
+name: coursework-shop
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=128M
+    environment:
+      MYSQL_DATABASE: shop
+      MYSQL_USER: shop
+      MYSQL_PASSWORD: "${SHOP_DB_PASSWORD:?Run create-env.sh first}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Run create-env.sh first}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping --silent -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    mem_limit: 768m
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/shop?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: shop
+      SHOP_DB_PASSWORD: "${SHOP_DB_PASSWORD:?Run create-env.sh first}"
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx384m
+    expose:
+      - "8080"
+    mem_limit: 768m
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    mem_limit: 128m
+
+volumes:
+  mysql_data:
